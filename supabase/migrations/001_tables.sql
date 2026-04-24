@@ -1,13 +1,13 @@
 -- ClearPay — Initial Schema Migration
 -- Run this in the Supabase SQL editor before starting the app
 
-create extension if not exists "uuid-ossp";
+-- gen_random_uuid() is built-in from PostgreSQL 13+, no extension needed
 
 -- ─────────────────────────────────────────────
 -- ACCOUNTS
 -- ─────────────────────────────────────────────
 create table if not exists accounts (
-  id          uuid primary key default uuid_generate_v4(),
+  id          uuid primary key default gen_random_uuid(),
   company_name text not null,
   owner_id    uuid not null references auth.users(id) on delete cascade,
   plan        text not null default 'starter',
@@ -18,7 +18,7 @@ create table if not exists accounts (
 -- ACCOUNT MEMBERS
 -- ─────────────────────────────────────────────
 create table if not exists account_members (
-  id                  uuid primary key default uuid_generate_v4(),
+  id                  uuid primary key default gen_random_uuid(),
   account_id          uuid not null references accounts(id) on delete cascade,
   user_id             uuid references auth.users(id) on delete set null,
   email               text not null,
@@ -34,7 +34,7 @@ create table if not exists account_members (
 -- BUSINESSES
 -- ─────────────────────────────────────────────
 create table if not exists businesses (
-  id             uuid primary key default uuid_generate_v4(),
+  id             uuid primary key default gen_random_uuid(),
   account_id     uuid not null references accounts(id) on delete cascade,
   name           text not null,
   industry       text not null default '',
@@ -52,7 +52,7 @@ create table if not exists businesses (
 -- EMPLOYEES
 -- ─────────────────────────────────────────────
 create table if not exists employees (
-  id             uuid primary key default uuid_generate_v4(),
+  id             uuid primary key default gen_random_uuid(),
   business_id    uuid not null references businesses(id) on delete cascade,
   account_id     uuid not null references accounts(id) on delete cascade,
   full_name      text not null,
@@ -71,7 +71,7 @@ create table if not exists employees (
 -- ADMIN STAFF
 -- ─────────────────────────────────────────────
 create table if not exists admin_staff (
-  id             uuid primary key default uuid_generate_v4(),
+  id             uuid primary key default gen_random_uuid(),
   business_id    uuid not null references businesses(id) on delete cascade,
   account_id     uuid not null references accounts(id) on delete cascade,
   role_name      text not null,
@@ -88,7 +88,7 @@ create table if not exists admin_staff (
 -- DEDUCTION PROFILES
 -- ─────────────────────────────────────────────
 create table if not exists deduction_profiles (
-  id          uuid primary key default uuid_generate_v4(),
+  id          uuid primary key default gen_random_uuid(),
   employee_id uuid not null references employees(id) on delete cascade,
   account_id  uuid not null references accounts(id) on delete cascade,
   type        text not null,
@@ -101,7 +101,7 @@ create table if not exists deduction_profiles (
 -- RATE CHANGE HISTORY
 -- ─────────────────────────────────────────────
 create table if not exists rate_change_history (
-  id          uuid primary key default uuid_generate_v4(),
+  id          uuid primary key default gen_random_uuid(),
   employee_id uuid not null references employees(id) on delete cascade,
   account_id  uuid not null references accounts(id) on delete cascade,
   old_rate    numeric(10,2) not null,
@@ -114,7 +114,7 @@ create table if not exists rate_change_history (
 -- HOURS ENTRIES
 -- ─────────────────────────────────────────────
 create table if not exists hours_entries (
-  id               uuid primary key default uuid_generate_v4(),
+  id               uuid primary key default gen_random_uuid(),
   employee_id      uuid not null references employees(id) on delete cascade,
   business_id      uuid not null references businesses(id) on delete cascade,
   account_id       uuid not null references accounts(id) on delete cascade,
@@ -130,7 +130,7 @@ create table if not exists hours_entries (
 -- PAYROLL RUNS
 -- ─────────────────────────────────────────────
 create table if not exists payroll_runs (
-  id               uuid primary key default uuid_generate_v4(),
+  id               uuid primary key default gen_random_uuid(),
   business_id      uuid not null references businesses(id) on delete cascade,
   account_id       uuid not null references accounts(id) on delete cascade,
   pay_period_start date not null,
@@ -147,7 +147,7 @@ create table if not exists payroll_runs (
 -- PAYROLL LINE ITEMS
 -- ─────────────────────────────────────────────
 create table if not exists payroll_line_items (
-  id             uuid primary key default uuid_generate_v4(),
+  id             uuid primary key default gen_random_uuid(),
   payroll_run_id uuid not null references payroll_runs(id) on delete cascade,
   employee_id    uuid not null references employees(id) on delete cascade,
   account_id     uuid not null references accounts(id) on delete cascade,
@@ -165,7 +165,7 @@ create table if not exists payroll_line_items (
 -- BONUS RECORDS
 -- ─────────────────────────────────────────────
 create table if not exists bonus_records (
-  id                uuid primary key default uuid_generate_v4(),
+  id                uuid primary key default gen_random_uuid(),
   business_id       uuid not null references businesses(id) on delete cascade,
   account_id        uuid not null references accounts(id) on delete cascade,
   type              text not null check (type in ('admin','employee')),
@@ -181,7 +181,7 @@ create table if not exists bonus_records (
 -- AUDIT LOG — immutable, no update/delete RLS
 -- ─────────────────────────────────────────────
 create table if not exists audit_log (
-  id          uuid primary key default uuid_generate_v4(),
+  id          uuid primary key default gen_random_uuid(),
   account_id  uuid not null references accounts(id) on delete cascade,
   user_id     uuid not null references auth.users(id),
   user_email  text not null,
@@ -200,7 +200,7 @@ create table if not exists audit_log (
 -- NOTIFICATIONS
 -- ─────────────────────────────────────────────
 create table if not exists notifications (
-  id         uuid primary key default uuid_generate_v4(),
+  id         uuid primary key default gen_random_uuid(),
   account_id uuid not null references accounts(id) on delete cascade,
   user_id    uuid not null references auth.users(id) on delete cascade,
   type       text not null,
@@ -213,7 +213,7 @@ create table if not exists notifications (
 -- REPORT SCHEDULES
 -- ─────────────────────────────────────────────
 create table if not exists report_schedules (
-  id          uuid primary key default uuid_generate_v4(),
+  id          uuid primary key default gen_random_uuid(),
   account_id  uuid not null references accounts(id) on delete cascade,
   report_type text not null,
   business_id uuid references businesses(id) on delete cascade,
@@ -228,7 +228,7 @@ create table if not exists report_schedules (
 -- SESSIONS
 -- ─────────────────────────────────────────────
 create table if not exists sessions (
-  id          uuid primary key default uuid_generate_v4(),
+  id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users(id) on delete cascade,
   account_id  uuid not null references accounts(id) on delete cascade,
   device_info text not null default '',
@@ -241,7 +241,7 @@ create table if not exists sessions (
 -- FAILED LOGIN ATTEMPTS — immutable
 -- ─────────────────────────────────────────────
 create table if not exists failed_login_attempts (
-  id           uuid primary key default uuid_generate_v4(),
+  id           uuid primary key default gen_random_uuid(),
   email        text not null,
   ip_address   text not null,
   attempted_at timestamptz not null default now()
