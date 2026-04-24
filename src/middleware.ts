@@ -31,6 +31,13 @@ export async function middleware(request: NextRequest) {
 
   if (isStaticAsset) return NextResponse.next()
 
+  // If Supabase isn't configured yet, allow public routes and block protected ones
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!supabaseUrl || supabaseUrl.includes('your-project')) {
+    if (isPublicPage || isPublicApi) return NextResponse.next()
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
   const { supabaseResponse, user } = await updateSession(request)
 
   // Unauthenticated user on protected route
