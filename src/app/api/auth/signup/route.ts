@@ -35,15 +35,16 @@ export async function POST(request: NextRequest) {
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
     password,
-    email_confirm: false, // requires email verification
+    email_confirm: true,
   })
 
   if (authError || !authData.user) {
     await recordFailedLogin(email, ip)
-    if (authError?.message?.includes('already registered')) {
+    const msg = authError?.message?.toLowerCase() ?? ''
+    if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('already exists')) {
       return NextResponse.json({ error: 'Email already in use' }, { status: 409 })
     }
-    return NextResponse.json({ error: 'Failed to create account' }, { status: 500 })
+    return NextResponse.json({ error: authError?.message ?? 'Failed to create account' }, { status: 500 })
   }
 
   // Create account record
@@ -69,7 +70,5 @@ export async function POST(request: NextRequest) {
     accepted_at: new Date().toISOString(),
   })
 
-  return NextResponse.json({
-    message: 'Account created. Please check your email to verify your account.',
-  }, { status: 201 })
+  return NextResponse.json({ message: 'Account created successfully.' }, { status: 201 })
 }
